@@ -21,3 +21,5 @@ alias COMPLETION_MODELS =
   | "text-curie-001"
   | "text-babbage-001"
   | "text-ada-001";
+
+alias IMAGE_SIZES = "256x256" | "512x512" | "1024x1024";
