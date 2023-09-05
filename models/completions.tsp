@@ -103,7 +103,7 @@ scalar Penalty extends float64;
 model StopSequences is string[];
 
 @minValue(0)
-@maxValue(1)
+@maxValue(2)
 scalar Temperature extends float64;
 
 @minValue(0)
