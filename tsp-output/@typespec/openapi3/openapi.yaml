@@ -4,9 +4,9 @@ info:
   version: 2.0.0
 tags: []
 paths:
-  /chat:
+  /chat/completions:
     post:
-      operationId: Chat_createChatCompletion
+      operationId: createChatCompletion
       parameters: []
       responses:
         '200':
@@ -172,6 +172,21 @@ paths:
                   "finish_reason": "stop"
                 }]
               }
+  /completions:
+    post:
+      operationId: createCompletion
+      parameters: []
+      responses:
+        '204':
+          description: >-
+            There is no content to send for this request, but the headers may be
+            useful. 
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompletionRequest'
 components:
   schemas:
     ChatCompletionFunctionCallOption:
@@ -320,6 +335,26 @@ components:
       required:
         - role
         - content
+    CompletionUsage:
+      type: object
+      properties:
+        prompt_tokens:
+          type: integer
+          format: int64
+          description: Number of tokens in the prompt.
+        completion_tokens:
+          type: integer
+          format: int64
+          description: Number of tokens in the generated completion
+        total_tokens:
+          type: integer
+          format: int64
+          description: Total number of tokens used in the request (prompt + completion).
+      description: Usage statistics for the completion request.
+      required:
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
     CreateChatCompletionRequest:
       type: object
       properties:
@@ -387,64 +422,94 @@ components:
           oneOf:
             - $ref: '#/components/schemas/Temperature'
           nullable: true
-          description: '*completions_temperature_description'
+          description: >-
+            What sampling temperature to use, between 0 and 2. Higher values
+            like 0.8 will make the output
+
+            more random, while lower values like 0.2 will make it more focused
+            and deterministic.
+
+
+            We generally recommend altering this or `top_p` but not both.
         top_p:
           oneOf:
             - $ref: '#/components/schemas/TopP'
           nullable: true
-          description: '*completions_top_p_description'
+          description: >-
+            An alternative to sampling with temperature, called nucleus
+            sampling, where the model considers
+
+            the results of the tokens with top_p probability mass. So 0.1 means
+            only the tokens comprising
+
+            the top 10% probability mass are considered.
+
+
+            We generally recommend altering this or `temperature` but not both.
         'n':
           oneOf:
             - $ref: '#/components/schemas/N'
           nullable: true
-          description: How many chat completion choices to generate for each input message.
-        stream:
-          type: boolean
+          description: >-
+            How many completions to generate for each prompt.
+
+            **Note:** Because this parameter generates many completions, it can
+            quickly consume your token
+
+            quota. Use carefully and ensure that you have reasonable settings
+            for `max_tokens` and `stop`.
+        max_tokens:
+          oneOf:
+            - $ref: '#/components/schemas/MaxTokens'
           nullable: true
           description: >-
-            If set, partial message deltas will be sent, like in ChatGPT. Tokens
-            will be sent as data-only
+            The maximum number of [tokens](/tokenizer) to generate in the
+            completion.
 
-            [server-sent
-            events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format)
 
-            as they become available, with the stream terminated by a `data:
-            [DONE]` message.
+            The token count of your prompt plus `max_tokens` cannot exceed the
+            model's context length.
 
             [Example Python
-            code](https://github.com/openai/openai-cookbook/blob/main/examples/How_to_stream_completions.ipynb).
-          default: true
+            code](https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb)
+
+            for counting tokens.
         stop:
           anyOf:
             - type: string
             - $ref: '#/components/schemas/StopSequences'
           nullable: true
           description: Up to 4 sequences where the API will stop generating further tokens.
-        max_tokens:
-          type: integer
-          format: int64
-          description: >-
-            The maximum number of [tokens](/tokenizer) to generate in the chat
-            completion.
-
-
-            The total length of input tokens and generated tokens is limited by
-            the model's context length.
-
-            [Example Python
-            code](https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb)
-
-            for counting tokens.
         presence_penalty:
           oneOf:
             - $ref: '#/components/schemas/Penalty'
           nullable: true
-          description: '*completions_presence_penalty_description'
+          description: >-
+            Number between -2.0 and 2.0. Positive values penalize new tokens
+            based on whether they appear
+
+            in the text so far, increasing the model's likelihood to talk about
+            new topics.
+
+
+            [See more information about frequency and presence
+            penalties.](/docs/guides/gpt/parameter-details)
         frequency_penalty:
           oneOf:
             - $ref: '#/components/schemas/Penalty'
           nullable: true
-          description: '*completions_frequency_penalty_description'
+          description: >-
+            Number between -2.0 and 2.0. Positive values penalize new tokens
+            based on their existing
+
+            frequency in the text so far, decreasing the model's likelihood to
+            repeat the same line
+
+            verbatim.
+
+
+            [See more information about frequency and presence
+            penalties.](/docs/guides/gpt/parameter-details)
         logit_bias:
           type: object
           additionalProperties:
@@ -470,11 +535,33 @@ components:
             should result in a ban or exclusive selection of the relevant token.
           x-oaiTypeLabel: map
         user:
-          $ref: '#/components/schemas/User'
+          allOf:
+            - $ref: '#/components/schemas/User'
+          description: >-
+            A unique identifier representing your end-user, which can help
+            OpenAI to monitor and detect
+
+            abuse. [Learn
+            more](/docs/guides/safety-best-practices/end-user-ids).
+        stream:
+          type: boolean
+          nullable: true
+          description: >-
+            If set, partial message deltas will be sent, like in ChatGPT. Tokens
+            will be sent as data-only
+
+            [server-sent
+            events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format)
+
+            as they become available, with the stream terminated by a `data:
+            [DONE]` message.
+
+            [Example Python
+            code](https://github.com/openai/openai-cookbook/blob/main/examples/How_to_stream_completions.ipynb).
+          default: true
       required:
         - model
         - messages
-        - temperature
     CreateChatCompletionResponse:
       type: object
       properties:
@@ -494,38 +581,40 @@ components:
           type: string
           description: The model used for the chat completion.
         choices:
-          type: object
-          properties:
-            index:
-              type: integer
-              format: int64
-              description: The index of the choice in the list of choices.
-            message:
-              $ref: '#/components/schemas/ChatCompletionResponseMessage'
-            finish_reason:
-              type: string
-              enum:
-                - stop
-                - length
-                - function_call
-              description: >-
-                The reason the model stopped generating tokens. This will be
-                `stop` if the model hit a
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+                format: int64
+                description: The index of the choice in the list of choices.
+              message:
+                $ref: '#/components/schemas/ChatCompletionResponseMessage'
+              finish_reason:
+                type: string
+                enum:
+                  - stop
+                  - length
+                  - function_call
+                description: >-
+                  The reason the model stopped generating tokens. This will be
+                  `stop` if the model hit a
 
-                natural stop point or a provided stop sequence, `length` if the
-                maximum number of tokens
+                  natural stop point or a provided stop sequence, `length` if
+                  the maximum number of tokens
 
-                specified in the request was reached, or `function_call` if the
-                model called a function.
+                  specified in the request was reached, or `function_call` if
+                  the model called a function.
+            required:
+              - index
+              - message
+              - finish_reason
           description: >-
             A list of chat completion choices. Can be more than one if `n` is
             greater than 1.
-          required:
-            - index
-            - message
-            - finish_reason
         usage:
-          type: string
+          $ref: '#/components/schemas/CompletionUsage'
       description: >-
         Represents a chat completion response returned by model, based on the
         provided input.
@@ -539,6 +628,349 @@ components:
         name: The chat completion object
         group: chat
         example: ''
+    CreateCompletionRequest:
+      type: object
+      properties:
+        model:
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                - babbage-002
+                - davinci-002
+                - text-davinci-003
+                - text-davinci-002
+                - text-davinci-001
+                - code-davinci-002
+                - text-curie-001
+                - text-babbage-001
+                - text-ada-001
+          description: >-
+            ID of the model to use. You can use the [List
+            models](/docs/api-reference/models/list) API to
+
+            see all of your available models, or see our [Model
+            overview](/docs/models/overview) for
+
+            descriptions of them.
+          x-oaiTypeLabel: string
+        prompt:
+          anyOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+            - $ref: '#/components/schemas/TokenArray'
+            - $ref: '#/components/schemas/TokenArrayArray'
+          nullable: true
+          description: >-
+            The prompt(s) to generate completions for, encoded as a string,
+            array of strings, array of
+
+            tokens, or array of token arrays.
+
+
+            Note that <|endoftext|> is the document separator that the model
+            sees during training, so if a
+
+            prompt is not specified the model will generate as if from the
+            beginning of a new document.
+          default: <|endoftext|>
+        suffix:
+          type: string
+          nullable: true
+          description: The suffix that comes after a completion of inserted text.
+        temperature:
+          oneOf:
+            - $ref: '#/components/schemas/Temperature'
+          nullable: true
+          description: >-
+            What sampling temperature to use, between 0 and 2. Higher values
+            like 0.8 will make the output
+
+            more random, while lower values like 0.2 will make it more focused
+            and deterministic.
+
+
+            We generally recommend altering this or `top_p` but not both.
+        top_p:
+          oneOf:
+            - $ref: '#/components/schemas/TopP'
+          nullable: true
+          description: >-
+            An alternative to sampling with temperature, called nucleus
+            sampling, where the model considers
+
+            the results of the tokens with top_p probability mass. So 0.1 means
+            only the tokens comprising
+
+            the top 10% probability mass are considered.
+
+
+            We generally recommend altering this or `temperature` but not both.
+        'n':
+          oneOf:
+            - $ref: '#/components/schemas/N'
+          nullable: true
+          description: >-
+            How many completions to generate for each prompt.
+
+            **Note:** Because this parameter generates many completions, it can
+            quickly consume your token
+
+            quota. Use carefully and ensure that you have reasonable settings
+            for `max_tokens` and `stop`.
+        max_tokens:
+          oneOf:
+            - $ref: '#/components/schemas/MaxTokens'
+          nullable: true
+          description: >-
+            The maximum number of [tokens](/tokenizer) to generate in the
+            completion.
+
+
+            The token count of your prompt plus `max_tokens` cannot exceed the
+            model's context length.
+
+            [Example Python
+            code](https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb)
+
+            for counting tokens.
+        stop:
+          anyOf:
+            - type: string
+            - $ref: '#/components/schemas/StopSequences'
+          nullable: true
+          description: Up to 4 sequences where the API will stop generating further tokens.
+        presence_penalty:
+          oneOf:
+            - $ref: '#/components/schemas/Penalty'
+          nullable: true
+          description: >-
+            Number between -2.0 and 2.0. Positive values penalize new tokens
+            based on whether they appear
+
+            in the text so far, increasing the model's likelihood to talk about
+            new topics.
+
+
+            [See more information about frequency and presence
+            penalties.](/docs/guides/gpt/parameter-details)
+        frequency_penalty:
+          oneOf:
+            - $ref: '#/components/schemas/Penalty'
+          nullable: true
+          description: >-
+            Number between -2.0 and 2.0. Positive values penalize new tokens
+            based on their existing
+
+            frequency in the text so far, decreasing the model's likelihood to
+            repeat the same line
+
+            verbatim.
+
+
+            [See more information about frequency and presence
+            penalties.](/docs/guides/gpt/parameter-details)
+        logit_bias:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+          nullable: true
+          description: >-
+            Modify the likelihood of specified tokens appearing in the
+            completion.
+
+            Accepts a json object that maps tokens (specified by their token ID
+            in the tokenizer) to an
+
+            associated bias value from -100 to 100. Mathematically, the bias is
+            added to the logits
+
+            generated by the model prior to sampling. The exact effect will vary
+            per model, but values
+
+            between -1 and 1 should decrease or increase likelihood of
+            selection; values like -100 or 100
+
+            should result in a ban or exclusive selection of the relevant token.
+          x-oaiTypeLabel: map
+        user:
+          allOf:
+            - $ref: '#/components/schemas/User'
+          description: >-
+            A unique identifier representing your end-user, which can help
+            OpenAI to monitor and detect
+
+            abuse. [Learn
+            more](/docs/guides/safety-best-practices/end-user-ids).
+        stream:
+          type: boolean
+          nullable: true
+          description: >-
+            If set, partial message deltas will be sent, like in ChatGPT. Tokens
+            will be sent as data-only
+
+            [server-sent
+            events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format)
+
+            as they become available, with the stream terminated by a `data:
+            [DONE]` message.
+
+            [Example Python
+            code](https://github.com/openai/openai-cookbook/blob/main/examples/How_to_stream_completions.ipynb).
+          default: true
+        logprobs:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            Include the log probabilities on the `logprobs` most likely tokens,
+            as well the chosen tokens.
+
+            For example, if `logprobs` is 5, the API will return a list of the 5
+            most likely tokens. The
+
+            API will always return the `logprob` of the sampled token, so there
+            may be up to `logprobs+1`
+
+            elements in the response.
+
+
+            The maximum value for `logprobs` is 5.
+        echo:
+          type: boolean
+          nullable: true
+          description: Echo back the prompt in addition to the completion
+          default: false
+        best_of:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            Generates `best_of` completions server-side and returns the "best"
+            (the one with the highest
+
+            log probability per token). Results cannot be streamed.
+
+
+            When used with `n`, `best_of` controls the number of candidate
+            completions and `n` specifies
+
+            how many to return – `best_of` must be greater than `n`.
+
+
+            **Note:** Because this parameter generates many completions, it can
+            quickly consume your token
+
+            quota. Use carefully and ensure that you have reasonable settings
+            for `max_tokens` and `stop`.
+      required:
+        - model
+        - prompt
+        - best_of
+    CreateCompletionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: A unique identifier for the completion.
+        object:
+          type: string
+          description: The object type, which is always `text_completion`.
+        created:
+          type: integer
+          format: unixtime
+          description: The Unix timestamp (in seconds) of when the completion was created.
+        model:
+          type: string
+          description: The model used for the completion.
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+                format: int64
+              text:
+                type: string
+              logprobs:
+                type: object
+                properties:
+                  tokens:
+                    type: array
+                    items:
+                      type: string
+                  token_logprobs:
+                    type: array
+                    items:
+                      type: number
+                      format: double
+                  top_logprobs:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties:
+                        type: integer
+                        format: int64
+                  text_offset:
+                    type: array
+                    items:
+                      type: integer
+                      format: int64
+                required:
+                  - tokens
+                  - token_logprobs
+                  - top_logprobs
+                  - text_offset
+                nullable: true
+              finish_reason:
+                type: string
+                enum:
+                  - stop
+                  - length
+                description: >-
+                  The reason the model stopped generating tokens. This will be
+                  `stop` if the model hit a
+
+                  natural stop point or a provided stop sequence, or `length` if
+                  the maximum number of tokens
+
+                  specified in the request was reached.
+            required:
+              - index
+              - text
+              - logprobs
+              - finish_reason
+          description: The list of completion choices the model generated for the input.
+        usage:
+          $ref: '#/components/schemas/CompletionUsage'
+      description: >-
+        Represents a completion response from the API. Note: both the streamed
+        and non-streamed response
+
+        objects share the same shape (unlike the chat endpoint).
+      required:
+        - id
+        - object
+        - created
+        - model
+        - choices
+      x-oaiMeta:
+        name: The  completion object
+        legacy: true
+        example: ''
+    LogProbs:
+      type: integer
+      format: int64
+      minimum: 0
+      maximum: 5
+    MaxTokens:
+      type: integer
+      format: int64
+      minimum: 0
     'N':
       type: integer
       format: int64
@@ -560,6 +992,17 @@ components:
       format: double
       minimum: 0
       maximum: 1
+    TokenArray:
+      type: array
+      items:
+        type: integer
+        format: int64
+      minItems: 1
+    TokenArrayArray:
+      type: array
+      items:
+        $ref: '#/components/schemas/TokenArray'
+      minItems: 1
     TopP:
       type: number
       format: double
@@ -567,8 +1010,3 @@ components:
       maximum: 1
     User:
       type: string
-      description: >-
-        A unique identifier representing your end-user, which can help OpenAI to
-        monitor and detect
-
-        abuse. [Learn more](/docs/guides/safety-best-practices/end-user-ids).

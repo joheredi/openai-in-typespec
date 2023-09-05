@@ -1,6 +1,6 @@
 using OpenAPI;
 
-@@extension(OpenAI.Chat.createChatCompletion,
+@@extension(OpenAI.createChatCompletion,
   "x-oaiMeta",
   {
     name: "Create chat completion",
