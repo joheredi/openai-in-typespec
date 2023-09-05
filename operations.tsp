@@ -63,3 +63,26 @@ interface Images {
 op createEmbedding(
   @body embedding: CreateEmbeddingRequest,
 ): CreateEmbeddingResponse;
+
+@route("/audio")
+interface Audio {
+  @route("transcriptions")
+  @post
+  @operationId("createTranscription")
+  @tag("OpenAI")
+  @summary("Transcribes audio into the input language.")
+  createTranscription(
+    @header contentType: "multipart/form-data",
+    @body audio: CreateTranscriptionRequest,
+  ): CreateTranscriptionResponse;
+
+  @route("translations")
+  @post
+  @operationId("createTranslation")
+  @tag("OpenAI")
+  @summary("Transcribes audio into the input language.")
+  createTranslation(
+    @header contentType: "multipart/form-data",
+    @body audio: CreateTranslationRequest,
+  ): CreateTranslationResponse;
+}
