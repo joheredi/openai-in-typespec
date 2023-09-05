@@ -86,3 +86,57 @@ interface Audio {
     @body audio: CreateTranslationRequest,
   ): CreateTranslationResponse;
 }
+
+@route("/files")
+interface Files {
+  @tag("OpenAI")
+  @get
+  @summary("Returns a list of files that belong to the user's organization.")
+  @operationId("listFiles")
+  listFiles(): ListFilesResponse;
+
+  @tag("OpenAI")
+  @post
+  @summary("Returns a list of files that belong to the user's organization.")
+  @operationId("createFile")
+  createFile(
+    @header contentType: "multipart/form-data",
+    @body file: CreateFileRequest,
+  ): OpenAIFile;
+
+  @tag("OpenAI")
+  @post
+  @summary("Returns information about a specific file.")
+  @operationId("retrieveFile")
+  @route("/files/{file_id}")
+  retrieveFile(
+    /**
+     * The ID of the file to use for this request
+     */
+    @path file_id: string,
+  ): OpenAIFile;
+
+  @tag("OpenAI")
+  @delete
+  @summary("Delete a file")
+  @operationId("deleteFile")
+  @route("/files/{file_id}")
+  deleteFile(
+    /**
+     * The ID of the file to use for this request
+     */
+    @path file_id: string,
+  ): DeleteFileResponse;
+
+  @route("/files/{file_id}/content")
+  @tag("OpenAI")
+  @get
+  @summary("Returns the contents of the specified file")
+  @operationId("downloadFile")
+  downloadFile(
+    /**
+     * The ID of the file to use for this request
+     */
+    @path file_id: string,
+  ): string;
+}

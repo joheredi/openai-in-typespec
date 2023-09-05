@@ -5,6 +5,46 @@ info:
 tags:
   - name: OpenAI
 paths:
+  /audio/transcriptions:
+    post:
+      tags:
+        - OpenAI
+      operationId: createTranscription
+      summary: Transcribes audio into the input language.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTranscriptionResponse'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateTranscriptionRequest'
+  /audio/translations:
+    post:
+      tags:
+        - OpenAI
+      operationId: createTranslation
+      summary: Transcribes audio into the input language.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTranslationResponse'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateTranslationRequest'
   /chat/completions:
     post:
       tags:
@@ -234,6 +274,98 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateEmbeddingRequest'
+  /files:
+    get:
+      tags:
+        - OpenAI
+      operationId: listFiles
+      summary: Returns a list of files that belong to the user's organization.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFilesResponse'
+    post:
+      tags:
+        - OpenAI
+      operationId: createFile
+      summary: Returns a list of files that belong to the user's organization.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIFile'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateFileRequest'
+  /files/files/{file_id}:
+    post:
+      tags:
+        - OpenAI
+      operationId: retrieveFile
+      summary: Returns information about a specific file.
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          description: The ID of the file to use for this request
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIFile'
+    delete:
+      tags:
+        - OpenAI
+      operationId: deleteFile
+      summary: Delete a file
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          description: The ID of the file to use for this request
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteFileResponse'
+  /files/files/{file_id}/content:
+    get:
+      tags:
+        - OpenAI
+      operationId: downloadFile
+      summary: Returns the contents of the specified file
+      parameters:
+        - name: file_id
+          in: path
+          required: true
+          description: The ID of the file to use for this request
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: string
   /images/edits:
     post:
       tags:
@@ -1262,6 +1394,32 @@ components:
         - model
         - data
         - usage
+    CreateFileRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+          description: >-
+            Name of the [JSON
+            Lines](https://jsonlines.readthedocs.io/en/latest/) file to be
+            uploaded.
+
+
+            If the `purpose` is set to "fine-tune", the file will be used for
+            fine-tuning.
+        purpose:
+          type: string
+          description: >-
+            The intended purpose of the uploaded documents. Use "fine-tune" for
+
+            [fine-tuning](/docs/api-reference/fine-tuning). This allows us to
+            validate the format of the
+
+            uploaded file.
+      required:
+        - file
+        - purpose
     CreateImageEditRequest:
       type: object
       properties:
@@ -1544,6 +1702,19 @@ components:
           type: string
       required:
         - text
+    DeleteFileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+        deleted:
+          type: boolean
+      required:
+        - id
+        - object
+        - deleted
     EditN:
       type: integer
       format: int64
@@ -1612,6 +1783,18 @@ components:
       required:
         - created
         - data
+    ListFilesResponse:
+      type: object
+      properties:
+        object:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIFile'
+      required:
+        - object
+        - data
     LogProbs:
       type: integer
       format: int64
@@ -1626,6 +1809,66 @@ components:
       format: int64
       minimum: 1
       maximum: 128
+    OpenAIFile:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The file identifier, which can be referenced in the API endpoints.
+        object:
+          type: string
+          enum:
+            - file
+          description: The object type, which is always "file".
+        bytes:
+          type: integer
+          format: int64
+          description: The size of the file in bytes.
+        createdAt:
+          type: integer
+          format: unixtime
+          description: The Unix timestamp (in seconds) for when the file was created.
+        filename:
+          type: string
+          description: The name of the file.
+        purpose:
+          type: string
+          description: >-
+            The intended purpose of the file. Currently, only "fine-tune" is
+            supported.
+        status:
+          type: string
+          enum:
+            - uploaded
+            - processed
+            - pending
+            - error
+            - deleting
+            - deleted
+          description: >-
+            The current status of the file, which can be either `uploaded`,
+            `processed`, `pending`,
+
+            `error`, `deleting` or `deleted`.
+        status_details:
+          type: string
+          nullable: true
+          description: >-
+            Additional details about the status of the file. If the file is in
+            the `error` state, this will
+
+            include a message describing the error.
+      description: >-
+        The `File` object represents a document that has been uploaded to
+        OpenAI.
+      required:
+        - id
+        - object
+        - bytes
+        - createdAt
+        - filename
+        - purpose
+        - status
     Penalty:
       type: number
       format: double
