@@ -6,25 +6,36 @@ using OpenAPI;
 
 namespace OpenAI;
 
-@route("/chat/completions")
-@tag("OpenAI")
-@post
-op createChatCompletion(
-  @body body: CreateChatCompletionRequest,
-): CreateChatCompletionResponse;
-
+@route("/chat")
+namespace Chat {
+  @route("/completions")
+  interface Completions {
+    @tag("OpenAI")
+    @post
+    @operationId("createChatCompletion")
+    create(
+      @body body: CreateChatCompletionRequest,
+    ): CreateChatCompletionResponse | ErrorResponse;
+  }
+}
 @route("/completions")
-@tag("OpenAI")
-@post
-op createCompletion(
-  @body body: CreateCompletionRequest,
-): CreateCompletionResponse;
+interface Completions {
+  @tag("OpenAI")
+  @post
+  @operationId("createCompletion")
+  create(
+    @body body: CreateCompletionRequest,
+  ): CreateCompletionResponse | ErrorResponse;
+}
 
-@deprecated("deprecated")
 @route("/edits")
-@post
-@tag("OpenAI")
-op createEdit(@body edit: CreateEditRequest): CreateEditResponse;
+interface Edits {
+  @deprecated("deprecated")
+  @post
+  @tag("OpenAI")
+  @operationId("createEdit")
+  create(@body edit: CreateEditRequest): CreateEditResponse | ErrorResponse;
+}
 
 @route("/images")
 interface Images {
@@ -33,58 +44,65 @@ interface Images {
   @operationId("createImage")
   @tag("OpenAI")
   @summary("Creates an image given a prompt")
-  createImage(@body image: CreateImageRequest): ImagesResponse;
+  create(@body image: CreateImageRequest): ImagesResponse | ErrorResponse;
 
   @route("edits")
   @post
   @operationId("createImageEdit")
   @tag("OpenAI")
   @summary("Creates an edited or extended image given an original image and a prompt.")
-  createImageEdit(
+  createEdit(
     @header contentType: "multipart/form-data",
     @body image: CreateImageEditRequest,
-  ): ImagesResponse;
+  ): ImagesResponse | ErrorResponse;
 
   @route("variations")
   @post
   @operationId("createImageVariation")
   @tag("OpenAI")
   @summary("Creates an edited or extended image given an original image and a prompt.")
-  createImageVariation(
+  createVariation(
     @header contentType: "multipart/form-data",
     @body image: CreateImageVariationRequest,
-  ): ImagesResponse;
+  ): ImagesResponse | ErrorResponse;
 }
 
 @route("/embeddings")
-@tag("OpenAI")
-@summary("Creates an embedding vector representing the input text.")
-@post
-op createEmbedding(
-  @body embedding: CreateEmbeddingRequest,
-): CreateEmbeddingResponse;
+interface Embeddings {
+  @tag("OpenAI")
+  @summary("Creates an embedding vector representing the input text.")
+  @post
+  @operationId("createEmbedding")
+  create(
+    @body embedding: CreateEmbeddingRequest,
+  ): CreateEmbeddingResponse | ErrorResponse;
+}
 
 @route("/audio")
-interface Audio {
+namespace Audio {
   @route("transcriptions")
-  @post
-  @operationId("createTranscription")
-  @tag("OpenAI")
-  @summary("Transcribes audio into the input language.")
-  createTranscription(
-    @header contentType: "multipart/form-data",
-    @body audio: CreateTranscriptionRequest,
-  ): CreateTranscriptionResponse;
+  interface Transcriptions {
+    @post
+    @operationId("createTranscription")
+    @tag("OpenAI")
+    @summary("Transcribes audio into the input language.")
+    create(
+      @header contentType: "multipart/form-data",
+      @body audio: CreateTranscriptionRequest,
+    ): CreateTranscriptionResponse | ErrorResponse;
+  }
 
   @route("translations")
-  @post
-  @operationId("createTranslation")
-  @tag("OpenAI")
-  @summary("Transcribes audio into the input language.")
-  createTranslation(
-    @header contentType: "multipart/form-data",
-    @body audio: CreateTranslationRequest,
-  ): CreateTranslationResponse;
+  interface Translations {
+    @post
+    @operationId("createTranslation")
+    @tag("OpenAI")
+    @summary("Transcribes audio into the input language.")
+    create(
+      @header contentType: "multipart/form-data",
+      @body audio: CreateTranslationRequest,
+    ): CreateTranslationResponse | ErrorResponse;
+  }
 }
 
 @route("/files")
@@ -93,98 +111,128 @@ interface Files {
   @get
   @summary("Returns a list of files that belong to the user's organization.")
   @operationId("listFiles")
-  listFiles(): ListFilesResponse;
+  list(): ListFilesResponse | ErrorResponse;
 
   @tag("OpenAI")
   @post
   @summary("Returns a list of files that belong to the user's organization.")
   @operationId("createFile")
-  createFile(
+  create(
     @header contentType: "multipart/form-data",
     @body file: CreateFileRequest,
-  ): OpenAIFile;
+  ): OpenAIFile | ErrorResponse;
 
   @tag("OpenAI")
   @post
   @summary("Returns information about a specific file.")
   @operationId("retrieveFile")
   @route("/files/{file_id}")
-  retrieveFile(
+  retrieve(
     /**
      * The ID of the file to use for this request
      */
     @path file_id: string,
-  ): OpenAIFile;
+  ): OpenAIFile | ErrorResponse;
 
   @tag("OpenAI")
   @delete
   @summary("Delete a file")
   @operationId("deleteFile")
   @route("/files/{file_id}")
-  deleteFile(
+  delete(
     /**
      * The ID of the file to use for this request
      */
     @path file_id: string,
-  ): DeleteFileResponse;
+  ): DeleteFileResponse | ErrorResponse;
 
   @route("/files/{file_id}/content")
   @tag("OpenAI")
   @get
   @summary("Returns the contents of the specified file")
   @operationId("downloadFile")
-  downloadFile(
+  download(
     /**
      * The ID of the file to use for this request
      */
     @path file_id: string,
-  ): string;
+  ): string | ErrorResponse;
 }
 
-@route("/fine_tuning/jobs")
-interface FineTuningJobs {
-  @post
-  createFineTuningJob(@body job: CreateFineTuningJobRequest): FineTuningJob;
-
-  @get
-  listPaginatedFineTuningJobs(
+@route("/fine_tuning")
+namespace FineTuning {
+  @route("jobs")
+  interface Jobs {
     /**
-     * Identifier for the last job from the previous pagination request.
+     * Creates a job that fine-tunes a specified model from a given dataset.
+     *
+     * Response includes details of the enqueued job including job status and the name of the
+     * fine-tuned models once complete.
+     *
+     * [Learn more about fine-tuning](/docs/guides/fine-tuning)
      */
-    @query after?: string,
+    @post
+    @tag("OpenAI")
+    @operationId("createFineTuningJob")
+    create(
+      @body job: CreateFineTuningJobRequest,
+    ): FineTuningJob | ErrorResponse;
 
-    /**
-     * Number of fine-tuning jobs to retrieve.
-     */
-    @query limit?: safeint = 20,
-  ): ListPaginatedFineTuningJobsResponse;
-}
+    @get
+    @tag("OpenAI")
+    @operationId("listPaginatedFineTuningJobs")
+    list(
+      /**
+       * Identifier for the last job from the previous pagination request.
+       */
+      @query after?: string,
 
-@route("/fine_tuning/jobs/{fine_tuning_job_id}")
-interface FineTuningJobsResource {
-  @get retrieveFineTuningJob(@path fine_tuning_job_id: string): FineTuningJob;
-  @route("events")
-  @get
-  listFineTuningEvents(
-    /**
-     * The ID of the fine-tuning job to get events for.
-     */
-    @path fine_tuning_job_id: string,
+      /**
+       * Number of fine-tuning jobs to retrieve.
+       */
+      @query limit?: safeint = 20,
+    ): ListPaginatedFineTuningJobsResponse | ErrorResponse;
 
-    /**
-     * Identifier for the last event from the previous pagination request.
-     */
-    @query after?: string,
+    @summary("""
+    Get info about a fine-tuning job.
+  
+    [Learn more about fine-tuning](/docs/guides/fine-tuning)
+    """)
+    @route("{fine_tuning_job_id}")
+    @tag("OpenAI")
+    @get
+    @operationId("retrieveFineTuningJob")
+    retrieve(@path fine_tuning_job_id: string): FineTuningJob | ErrorResponse;
 
-    /**
-     * Number of events to retrieve.
-     */
-    @query limit?: integer = 20,
-  ): ListFineTuningJobEventsResponse;
+    @summary("Get status updates for a fine-tuning job.")
+    @tag("OpenAI")
+    @route("{fine_tuning_job_id}/events")
+    @get
+    @operationId("listFineTuningEvents")
+    listEvents(
+      /**
+       * The ID of the fine-tuning job to get events for.
+       */
+      @path fine_tuning_job_id: string,
 
-  @route("cancel")
-  @post
-  cancelFineTuningJob(@path fine_tuning_job_id: string): FineTuningJob;
+      /**
+       * Identifier for the last event from the previous pagination request.
+       */
+      @query after?: string,
+
+      /**
+       * Number of events to retrieve.
+       */
+      @query limit?: integer = 20,
+    ): ListFineTuningJobEventsResponse | ErrorResponse;
+
+    @summary("Immediately cancel a fine-tune job.")
+    @tag("OpenAI")
+    @route("{fine_tuning_job_id}/cancel")
+    @post
+    @operationId("cancelFineTuningJob")
+    cancel(@path fine_tuning_job_id: string): FineTuningJob | ErrorResponse;
+  }
 }
 
 @route("/fine-tunes")
@@ -200,19 +248,17 @@ interface FineTunes {
   [Learn more about fine-tuning](/docs/guides/legacy-fine-tuning)
   """)
   @operationId("createFineTune")
-  createFineTune(@body fine_tune: CreateFineTuneRequest): FineTune;
+  create(@body fine_tune: CreateFineTuneRequest): FineTune | ErrorResponse;
 
   @get
   @deprecated("deprecated")
   @tag("OpenAI")
   @summary("List your organization's fine-tuning jobs")
   @operationId("listFineTunes")
-  listFineTunes(): ListFineTunesResponse;
-}
+  list(): ListFineTunesResponse | ErrorResponse;
 
-@route("/fine-tunes/{fine_tune_id}")
-interface FineTunesResource {
   @get
+  @route("{fine_tune_id}")
   @deprecated("deprecated")
   @tag("OpenAI")
   @summary("""
@@ -221,20 +267,20 @@ interface FineTunesResource {
   [Learn more about fine-tuning](/docs/guides/legacy-fine-tuning)
   """)
   @operationId("retrieveFineTune")
-  retrieveFineTune(
+  retrieve(
     /**
      * The ID of the fine-tune job
      */
     @path fine_tune_id: string,
-  ): FineTune;
+  ): FineTune | ErrorResponse;
 
-  @route("events")
+  @route("{fine_tune_id}/events")
   @get
   @deprecated("deprecated")
   @tag("OpenAI")
   @summary("Get fine-grained status updates for a fine-tune job.")
   @operationId("listFineTuneEvents")
-  listFineTuneEvents(
+  listEvents(
     /**
      * The ID of the fine-tune job to get events for.
      */
@@ -250,20 +296,20 @@ interface FineTunesResource {
      * If set to false, only events generated so far will be returned.
      */
     @query stream?: boolean = false,
-  ): ListFineTuneEventsResponse;
+  ): ListFineTuneEventsResponse | ErrorResponse;
 
-  @route("cancel")
+  @route("{fine_tune_id}/cancel")
   @post
   @deprecated("deprecated")
   @tag("OpenAI")
   @summary("Immediately cancel a fine-tune job.")
   @operationId("cancelFineTune")
-  cancelFineTune(
+  cancel(
     /**
      * The ID of the fine-tune job to cancel
      */
     @path fine_tune_id: string,
-  ): FineTune;
+  ): FineTune | ErrorResponse;
 }
 
 @route("/models")
@@ -275,7 +321,7 @@ interface Models {
   owner and availability.
   """)
   @operationId("listModels")
-  list(): ListModelsResponse;
+  list(): ListModelsResponse | ErrorResponse;
 
   @get
   @route("{model}")
@@ -290,7 +336,7 @@ interface Models {
      * The ID of the model to use for this request
      */
     @path `model`: string,
-  ): Model;
+  ): Model | ErrorResponse;
 
   @delete
   @route("{model}")
@@ -304,7 +350,7 @@ interface Models {
      * The model to delete
      */
     @path `model`: string,
-  ): DeleteModelResponse;
+  ): DeleteModelResponse | ErrorResponse;
 }
 
 @route("/moderations")
@@ -312,5 +358,7 @@ interface Moderations {
   @operationId("createModeration")
   @tag("OpenAI")
   @summary("Classifies if text violates OpenAI's Content Policy")
-  create(@body content: CreateModerationRequest): CreateModerationResponse;
+  create(
+    @body content: CreateModerationRequest,
+  ): CreateModerationResponse | ErrorResponse;
 }

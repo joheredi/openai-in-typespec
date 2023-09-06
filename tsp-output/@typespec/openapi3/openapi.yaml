@@ -19,6 +19,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateTranscriptionResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -39,6 +45,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateTranslationResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -58,12 +70,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateChatCompletionResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateChatCompletionRequest'
+  /completions:
+    post:
+      tags:
+        - OpenAI
+      operationId: createCompletion
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCompletionResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCompletionRequest'
       x-oaiMeta:
         name: Create chat completion
         group: chat
@@ -215,25 +258,6 @@ paths:
                   "finish_reason": "stop"
                 }]
               }
-  /completions:
-    post:
-      tags:
-        - OpenAI
-      operationId: createCompletion
-      parameters: []
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateCompletionResponse'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateCompletionRequest'
   /edits:
     post:
       tags:
@@ -247,6 +271,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateEditResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -268,6 +298,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateEmbeddingResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -288,6 +324,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListFilesResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags:
         - OpenAI
@@ -301,6 +343,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIFile'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -327,6 +375,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIFile'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
       tags:
         - OpenAI
@@ -346,6 +400,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteFileResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /files/files/{file_id}/content:
     get:
       tags:
@@ -366,6 +426,12 @@ paths:
             application/json:
               schema:
                 type: string
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /fine-tunes:
     post:
       tags:
@@ -388,6 +454,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTune'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -408,6 +480,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListFineTunesResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       deprecated: true
   /fine-tunes/{fine_tune_id}:
     get:
@@ -432,6 +510,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTune'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       deprecated: true
   /fine-tunes/{fine_tune_id}/cancel:
     post:
@@ -453,6 +537,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTune'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       deprecated: true
   /fine-tunes/{fine_tune_id}/events:
     get:
@@ -496,10 +586,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListFineTuneEventsResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       deprecated: true
   /fine_tuning/jobs:
     post:
-      operationId: FineTuningJobs_createFineTuningJob
+      tags:
+        - OpenAI
+      operationId: createFineTuningJob
+      description: >-
+        Creates a job that fine-tunes a specified model from a given dataset.
+
+
+        Response includes details of the enqueued job including job status and
+        the name of the
+
+        fine-tuned models once complete.
+
+
+        [Learn more about fine-tuning](/docs/guides/fine-tuning)
       parameters: []
       responses:
         '200':
@@ -508,6 +617,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTuningJob'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -515,7 +630,9 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateFineTuningJobRequest'
     get:
-      operationId: FineTuningJobs_listPaginatedFineTuningJobs
+      tags:
+        - OpenAI
+      operationId: listPaginatedFineTuningJobs
       parameters:
         - name: after
           in: query
@@ -538,9 +655,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListPaginatedFineTuningJobsResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /fine_tuning/jobs/{fine_tuning_job_id}:
     get:
-      operationId: FineTuningJobsResource_retrieveFineTuningJob
+      tags:
+        - OpenAI
+      operationId: retrieveFineTuningJob
+      summary: |-
+        Get info about a fine-tuning job.
+
+        [Learn more about fine-tuning](/docs/guides/fine-tuning)
       parameters:
         - name: fine_tuning_job_id
           in: path
@@ -554,9 +683,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTuningJob'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /fine_tuning/jobs/{fine_tuning_job_id}/cancel:
     post:
-      operationId: FineTuningJobsResource_cancelFineTuningJob
+      tags:
+        - OpenAI
+      operationId: cancelFineTuningJob
+      summary: Immediately cancel a fine-tune job.
       parameters:
         - name: fine_tuning_job_id
           in: path
@@ -570,9 +708,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FineTuningJob'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /fine_tuning/jobs/{fine_tuning_job_id}/events:
     get:
-      operationId: FineTuningJobsResource_listFineTuningEvents
+      tags:
+        - OpenAI
+      operationId: listFineTuningEvents
+      summary: Get status updates for a fine-tuning job.
       parameters:
         - name: fine_tuning_job_id
           in: path
@@ -600,6 +747,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListFineTuningJobEventsResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /images/edits:
     post:
       tags:
@@ -616,6 +769,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ImagesResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -636,6 +795,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ImagesResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -658,6 +823,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ImagesResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -682,6 +853,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListModelsResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /models/{model}:
     get:
       tags:
@@ -706,6 +883,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Model'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     delete:
       tags:
         - OpenAI
@@ -727,6 +910,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteModelResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /moderations:
     post:
       tags:
@@ -741,6 +930,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateModerationResponse'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       requestBody:
         required: true
         content:
@@ -2606,6 +2801,31 @@ components:
         - index
         - object
         - embedding
+    Error:
+      type: object
+      properties:
+        type:
+          type: string
+        message:
+          type: string
+        param:
+          type: string
+          nullable: true
+        code:
+          type: string
+          nullable: true
+      required:
+        - type
+        - message
+        - param
+        - code
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+      required:
+        - error
     FineTune:
       type: object
       properties:

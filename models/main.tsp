@@ -7,3 +7,4 @@ import "./files.tsp";
 import "./fine-tuning.tsp";
 import "./models.tsp";
 import "./moderation.tsp";
+import "./errors.tsp";
