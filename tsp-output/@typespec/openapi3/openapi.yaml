@@ -366,6 +366,81 @@ paths:
             application/json:
               schema:
                 type: string
+  /fine_tuning/jobs:
+    post:
+      operationId: FineTuningJobs_createFineTuningJob
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJob'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFineTuningJobRequest'
+    get:
+      operationId: FineTuningJobs_listPaginatedFineTuningJobs
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPaginatedFineTuningJobsResponse'
+  /fine_tuning/jobs/{fine_tuning_job_id}:
+    get:
+      operationId: FineTuningJobsResource_retrieveFineTuningJob
+      parameters:
+        - name: fine_tuning_job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJob'
+  /fine_tuning/jobs/{fine_tuning_job_id}/cancel:
+    post:
+      operationId: FineTuningJobsResource_cancelFineTuningJob
+      parameters:
+        - name: fine_tuning_job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTuningJob'
+  /fine_tuning/jobs/{fine_tuning_job_id}/events:
+    get:
+      operationId: FineTuningJobsResource_listFineTuningEvents
+      parameters:
+        - name: fine_tuning_job_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFineTuningJobEventsResponse'
   /images/edits:
     post:
       tags:
@@ -1420,6 +1495,319 @@ components:
       required:
         - file
         - purpose
+    CreateFineTuneRequest:
+      type: object
+      properties:
+        training_file:
+          type: string
+          description: >-
+            The ID of an uploaded file that contains training data.
+
+
+            See [upload file](/docs/api-reference/files/upload) for how to
+            upload a file.
+
+
+            Your dataset must be formatted as a JSONL file, where each training
+            example is a JSON object
+
+            with the keys "prompt" and "completion". Additionally, you must
+            upload your file with the
+
+            purpose `fine-tune`.
+
+
+            See the [fine-tuning
+            guide](/docs/guides/legacy-fine-tuning/creating-training-data) for
+            more
+
+            details.
+        validation_file:
+          type: string
+          nullable: true
+          description: >-
+            The ID of an uploaded file that contains validation data.
+
+
+            If you provide this file, the data is used to generate validation
+            metrics periodically during
+
+            fine-tuning. These metrics can be viewed in the
+
+            [fine-tuning results
+            file](/docs/guides/legacy-fine-tuning/analyzing-your-fine-tuned-model).
+
+            Your train and validation data should be mutually exclusive.
+
+
+            Your dataset must be formatted as a JSONL file, where each
+            validation example is a JSON object
+
+            with the keys "prompt" and "completion". Additionally, you must
+            upload your file with the
+
+            purpose `fine-tune`.
+
+
+            See the [fine-tuning
+            guide](/docs/guides/legacy-fine-tuning/creating-training-data) for
+            more
+
+            details.
+        model:
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                - ada
+                - babbage
+                - curie
+                - davinci
+          nullable: true
+          description: >-
+            The name of the base model to fine-tune. You can select one of
+            "ada", "babbage", "curie",
+
+            "davinci", or a fine-tuned model created after 2022-04-21 and before
+            2023-08-22. To learn more
+
+            about these models, see the [Models](/docs/models) documentation.
+          x-oaiTypeLabel: string
+        n_epochs:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            The number of epochs to train the model for. An epoch refers to one
+            full cycle through the
+
+            training dataset.
+        batch_size:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            The batch size to use for training. The batch size is the number of
+            training examples used to
+
+            train a single forward and backward pass.
+
+
+            By default, the batch size will be dynamically configured to be
+            ~0.2% of the number of examples
+
+            in the training set, capped at 256 - in general, we've found that
+            larger batch sizes tend to
+
+            work better for larger datasets.
+        learning_rate_multiplier:
+          type: number
+          format: double
+          nullable: true
+          description: >-
+            The learning rate multiplier to use for training. The fine-tuning
+            learning rate is the original
+
+            learning rate used for pretraining multiplied by this value.
+
+
+            By default, the learning rate multiplier is the 0.05, 0.1, or 0.2
+            depending on final
+
+            `batch_size` (larger learning rates tend to perform better with
+            larger batch sizes). We
+
+            recommend experimenting with values in the range 0.02 to 0.2 to see
+            what produces the best
+
+            results.
+        prompt_loss_rate:
+          type: number
+          format: double
+          nullable: true
+          description: >-
+            The weight to use for loss on the prompt tokens. This controls how
+            much the model tries to
+
+            learn to generate the prompt (as compared to the completion which
+            always has a weight of 1.0),
+
+            and can add a stabilizing effect to training when completions are
+            short.
+
+
+            If prompts are extremely long (relative to completions), it may make
+            sense to reduce this
+
+            weight so as to avoid over-prioritizing learning the prompt.
+        compute_classification_metrics:
+          type: boolean
+          nullable: true
+          description: >-
+            If set, we calculate classification-specific metrics such as
+            accuracy and F-1 score using the
+
+            validation set at the end of every epoch. These metrics can be
+            viewed in the
+
+            [results
+            file](/docs/guides/legacy-fine-tuning/analyzing-your-fine-tuned-model).
+
+
+            In order to compute classification metrics, you must provide a
+            `validation_file`. Additionally,
+
+            you must specify `classification_n_classes` for multiclass
+            classification or
+
+            `classification_positive_class` for binary classification.
+        classification_n_classes:
+          type: integer
+          format: int64
+          nullable: true
+          description: |-
+            The number of classes in a classification task.
+
+            This parameter is required for multiclass classification.
+        classification_positive_class:
+          type: string
+          nullable: true
+          description: >-
+            The positive class in binary classification.
+
+
+            This parameter is needed to generate precision, recall, and F1
+            metrics when doing binary
+
+            classification.
+        classification_betas:
+          type: array
+          items:
+            type: number
+            format: double
+          nullable: true
+          description: >-
+            If this is provided, we calculate F-beta scores at the specified
+            beta values. The F-beta score
+
+            is a generalization of F-1 score. This is only used for binary
+            classification.
+
+
+            With a beta of 1 (i.e. the F-1 score), precision and recall are
+            given the same weight. A larger
+
+            beta score puts more weight on recall and less on precision. A
+            smaller beta score puts more
+
+            weight on precision and less on recall.
+        suffix:
+          oneOf:
+            - $ref: '#/components/schemas/SuffixString'
+          nullable: true
+          description: >-
+            A string of up to 40 characters that will be added to your
+            fine-tuned model name.
+
+
+            For example, a `suffix` of "custom-model-name" would produce a model
+            name like
+
+            `ada:ft-your-org:custom-model-name-2022-02-15-04-21-04`.
+      required:
+        - training_file
+        - suffix
+    CreateFineTuningJobRequest:
+      type: object
+      properties:
+        training_file:
+          type: string
+          description: >-
+            The ID of an uploaded file that contains training data.
+
+
+            See [upload file](/docs/api-reference/files/upload) for how to
+            upload a file.
+
+
+            Your dataset must be formatted as a JSONL file. Additionally, you
+            must upload your file with
+
+            the purpose `fine-tune`.
+
+
+            See the [fine-tuning guide](/docs/guides/fine-tuning) for more
+            details.
+        validation_file:
+          type: string
+          nullable: true
+          description: >-
+            The ID of an uploaded file that contains validation data.
+
+
+            If you provide this file, the data is used to generate validation
+            metrics periodically during
+
+            fine-tuning. These metrics can be viewed in the fine-tuning results
+            file. The same data should
+
+            not be present in both train and validation files.
+
+
+            Your dataset must be formatted as a JSONL file. You must upload your
+            file with the purpose
+
+            `fine-tune`.
+
+
+            See the [fine-tuning guide](/docs/guides/fine-tuning) for more
+            details.
+        model:
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                - babbage-002
+                - davinci-002
+                - gpt-3.5-turbo
+          description: >-
+            The name of the model to fine-tune. You can select one of the
+
+            [supported
+            models](/docs/guides/fine-tuning/what-models-can-be-fine-tuned).
+          x-oaiTypeLabel: string
+        hyperparameters:
+          type: object
+          properties:
+            n_epochs:
+              anyOf:
+                - type: string
+                  enum:
+                    - auto
+                - $ref: '#/components/schemas/NEpochs'
+              description: >-
+                The number of epochs to train the model for. An epoch refers to
+                one full cycle through the
+
+                training dataset.
+              default: auto
+          description: The hyperparameters used for the fine-tuning job.
+        suffix:
+          oneOf:
+            - $ref: '#/components/schemas/SuffixString'
+          nullable: true
+          description: >-
+            A string of up to 40 characters that will be added to your
+            fine-tuned model name.
+
+
+            For example, a `suffix` of "custom-model-name" would produce a model
+            name like
+
+            `ft:gpt-3.5-turbo:openai:custom-model-name:7p4lURel`.
+      required:
+        - training_file
+        - model
     CreateImageEditRequest:
       type: object
       properties:
@@ -1747,6 +2135,308 @@ components:
         - index
         - object
         - embedding
+    FineTune:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The object identifier, which can be referenced in the API endpoints.
+        object:
+          type: string
+          enum:
+            - fine-tune
+          description: The object type, which is always "fine-tune".
+        created_at:
+          type: integer
+          format: unixtime
+          description: >-
+            The Unix timestamp (in seconds) for when the fine-tuning job was
+            created.
+        updated_at:
+          type: integer
+          format: unixtime
+          description: >-
+            The Unix timestamp (in seconds) for when the fine-tuning job was
+            last updated.
+        model:
+          type: string
+          description: The base model that is being fine-tuned.
+        fine_tuned_model:
+          type: string
+          nullable: true
+          description: The name of the fine-tuned model that is being created.
+        organization_id:
+          type: string
+          description: The organization that owns the fine-tuning job.
+        status:
+          type: string
+          enum:
+            - created
+            - running
+            - succeeded
+            - failed
+            - cancelled
+          description: >-
+            The current status of the fine-tuning job, which can be either
+            `created`, `running`,
+
+            `succeeded`, `failed`, or `cancelled`.
+        hyperparams:
+          type: object
+          properties:
+            n_epochs:
+              type: integer
+              format: int64
+              description: >-
+                The number of epochs to train the model for. An epoch refers to
+                one full cycle through the
+
+                training dataset.
+            batch_size:
+              type: integer
+              format: int64
+              description: >-
+                The batch size to use for training. The batch size is the number
+                of training examples used to
+
+                train a single forward and backward pass.
+            prompt_loss_weight:
+              type: number
+              format: double
+              description: The weight to use for loss on the prompt tokens.
+            learning_rate_multiplier:
+              type: number
+              format: double
+              description: The learning rate multiplier to use for training.
+            compute_classification_metrics:
+              type: boolean
+              description: >-
+                The classification metrics to compute using the validation
+                dataset at the end of every epoch.
+            classification_positive_class:
+              type: string
+              description: The positive class to use for computing classification metrics.
+            classification_n_classes:
+              type: integer
+              format: int64
+              description: >-
+                The number of classes to use for computing classification
+                metrics.
+          description: >-
+            The hyperparameters used for the fine-tuning job. See the
+
+            [fine-tuning guide](/docs/guides/legacy-fine-tuning/hyperparameters)
+            for more details.
+          required:
+            - n_epochs
+            - batch_size
+            - prompt_loss_weight
+            - learning_rate_multiplier
+        training_files:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIFile'
+          description: The list of files used for training.
+        validation_files:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIFile'
+          description: The list of files used for validation.
+        result_files:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIFile'
+          description: The compiled results files for the fine-tuning job.
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/FineTuneEvent'
+          description: >-
+            The list of events that have been observed in the lifecycle of the
+            FineTune job.
+      description: >-
+        The `FineTune` object represents a legacy fine-tune job that has been
+        created through the API.
+      required:
+        - id
+        - object
+        - created_at
+        - updated_at
+        - model
+        - fine_tuned_model
+        - organization_id
+        - status
+        - hyperparams
+        - training_files
+        - validation_files
+        - result_files
+    FineTuneEvent:
+      type: object
+      properties:
+        object:
+          type: string
+        created_at:
+          type: integer
+          format: unixtime
+        level:
+          type: string
+        message:
+          type: string
+      required:
+        - object
+        - created_at
+        - level
+        - message
+    FineTuningEvent:
+      type: object
+      properties:
+        object:
+          type: string
+        created_at:
+          type: integer
+          format: unixtime
+        level:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        type:
+          type: string
+          enum:
+            - message
+            - metrics
+      required:
+        - object
+        - created_at
+        - level
+        - message
+    FineTuningJob:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The object identifier, which can be referenced in the API endpoints.
+        object:
+          type: string
+          enum:
+            - fine_tuning.job
+          description: The object type, which is always "fine_tuning.job".
+        created_at:
+          type: integer
+          format: unixtime
+          description: >-
+            The Unix timestamp (in seconds) for when the fine-tuning job was
+            created.
+        finished_at:
+          type: integer
+          format: unixtime
+          description: >-
+            The Unix timestamp (in seconds) for when the fine-tuning job was
+            finished.
+        model:
+          type: string
+          description: The base model that is being fine-tuned.
+        fine_tuned_model:
+          type: string
+          nullable: true
+          description: The name of the fine-tuned model that is being created.
+        organization_id:
+          type: string
+          description: The organization that owns the fine-tuning job.
+        status:
+          type: string
+          enum:
+            - created
+            - pending
+            - running
+            - succeeded
+            - failed
+            - cancelled
+          description: >-
+            The current status of the fine-tuning job, which can be either
+            `created`, `pending`, `running`,
+
+            `succeeded`, `failed`, or `cancelled`.
+        hyperparameters:
+          type: object
+          properties:
+            n_epochs:
+              anyOf:
+                - type: string
+                  enum:
+                    - auto
+                - $ref: '#/components/schemas/NEpochs'
+              description: >-
+                The number of epochs to train the model for. An epoch refers to
+                one full cycle through the
+
+                training dataset.
+
+
+                "Auto" decides the optimal number of epochs based on the size of
+                the dataset. If setting the
+
+                number manually, we support any number between 1 and 50 epochs.
+              default: auto
+          description: |-
+            The hyperparameters used for the fine-tuning job. See the
+            [fine-tuning guide](/docs/guides/fine-tuning) for more details.
+        training_file:
+          type: string
+          description: The file ID used for training.
+        validation_file:
+          type: string
+          nullable: true
+          description: The file ID used for validation.
+        result_files:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpenAIFile'
+          description: The compiled results files for the fine-tuning job.
+        trained_tokens:
+          type: integer
+          format: int64
+          description: >-
+            The total number of billable tokens processed by this fine tuning
+            job.
+      required:
+        - id
+        - object
+        - created_at
+        - finished_at
+        - model
+        - fine_tuned_model
+        - organization_id
+        - status
+        - hyperparameters
+        - training_file
+        - validation_file
+        - result_files
+        - trained_tokens
+    FineTuningJobEvent:
+      type: object
+      properties:
+        object:
+          type: string
+        created_at:
+          type: integer
+          format: unixtime
+        level:
+          type: string
+          enum:
+            - info
+            - warn
+            - error
+        message:
+          type: string
+      required:
+        - object
+        - created_at
+        - level
+        - message
     Image:
       type: object
       properties:
@@ -1795,6 +2485,57 @@ components:
       required:
         - object
         - data
+    ListFineTuneEventsResponse:
+      type: object
+      properties:
+        object:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FineTuneEvent'
+      required:
+        - object
+        - data
+    ListFineTunesResponse:
+      type: object
+      properties:
+        object:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FineTune'
+      required:
+        - object
+        - data
+    ListFineTuningJobEventsResponse:
+      type: object
+      properties:
+        object:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FineTuningJobEvent'
+      required:
+        - object
+        - data
+    ListPaginatedFineTuningJobsResponse:
+      type: object
+      properties:
+        object:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FineTuningJob'
+        has_more:
+          type: boolean
+      required:
+        - object
+        - data
+        - has_more
     LogProbs:
       type: integer
       format: int64
@@ -1809,6 +2550,11 @@ components:
       format: int64
       minimum: 1
       maximum: 128
+    NEpochs:
+      type: integer
+      format: int64
+      minimum: 1
+      maximum: 50
     OpenAIFile:
       type: object
       properties:
@@ -1880,6 +2626,10 @@ components:
         type: string
       minItems: 1
       maxItems: 4
+    SuffixString:
+      type: string
+      minLength: 1
+      maxLength: 40
     Temperature:
       type: number
       format: double

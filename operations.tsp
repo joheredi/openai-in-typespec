@@ -140,3 +140,29 @@ interface Files {
     @path file_id: string,
   ): string;
 }
+
+@route("/fine_tuning/jobs")
+interface FineTuningJobs {
+  @post
+  createFineTuningJob(@body job: CreateFineTuningJobRequest): FineTuningJob;
+
+  @get
+  listPaginatedFineTuningJobs(): ListPaginatedFineTuningJobsResponse;
+}
+
+@route("/fine_tuning/jobs/{fine_tuning_job_id}")
+interface FineTuningJobsResource {
+  @get retrieveFineTuningJob(@path fine_tuning_job_id: string): FineTuningJob;
+  @route("events")
+  @get
+  listFineTuningEvents(
+    @path fine_tuning_job_id: string,
+  ): ListFineTuningJobEventsResponse;
+
+  @route("cancel")
+  @post
+  cancelFineTuningJob(@path fine_tuning_job_id: string): FineTuningJob;
+}
+
+@route("/fine_tunes")
+interface FineTunes {}

@@ -4,3 +4,4 @@ import "./images.tsp";
 import "./embeddings.tsp";
 import "./audio.tsp";
 import "./files.tsp";
+import "./fine-tuning.tsp";
