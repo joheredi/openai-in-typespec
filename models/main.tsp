@@ -5,3 +5,4 @@ import "./embeddings.tsp";
 import "./audio.tsp";
 import "./files.tsp";
 import "./fine-tuning.tsp";
+import "./models.tsp";
