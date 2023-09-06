@@ -6,3 +6,4 @@ import "./audio.tsp";
 import "./files.tsp";
 import "./fine-tuning.tsp";
 import "./models.tsp";
+import "./moderation.tsp";

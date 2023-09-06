@@ -306,3 +306,11 @@ interface Models {
     @path `model`: string,
   ): DeleteModelResponse;
 }
+
+@route("/moderations")
+interface Moderations {
+  @operationId("createModeration")
+  @tag("OpenAI")
+  @summary("Classifies if text violates OpenAI's Content Policy")
+  create(@body content: CreateModerationRequest): CreateModerationResponse;
+}

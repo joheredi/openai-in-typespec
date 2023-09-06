@@ -664,6 +664,89 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/CreateImageVariationRequest'
+  /models:
+    get:
+      tags:
+        - OpenAI
+      operationId: listModels
+      summary: >-
+        Lists the currently available models, and provides basic information
+        about each one such as the
+
+        owner and availability.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListModelsResponse'
+  /models/{model}:
+    get:
+      tags:
+        - OpenAI
+      operationId: retrieveModel
+      summary: >-
+        Retrieves a model instance, providing basic information about the model
+        such as the owner and
+
+        permissioning.
+      parameters:
+        - name: model
+          in: path
+          required: true
+          description: The ID of the model to use for this request
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+    delete:
+      tags:
+        - OpenAI
+      operationId: deleteModel
+      summary: >-
+        Delete a fine-tuned model. You must have the Owner role in your
+        organization to delete a model.
+      parameters:
+        - name: model
+          in: path
+          required: true
+          description: The model to delete
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteModelResponse'
+  /moderations:
+    post:
+      tags:
+        - OpenAI
+      operationId: createModeration
+      summary: Classifies if text violates OpenAI's Content Policy
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateModerationResponse'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModerationRequest'
 components:
   schemas:
     ChatCompletionFunctionCallOption:
@@ -2102,6 +2185,222 @@ components:
           $ref: '#/components/schemas/User'
       required:
         - image
+    CreateModerationRequest:
+      type: object
+      properties:
+        input:
+          anyOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+          description: The input text to classify
+        model:
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                - text-moderation-latest
+                - text-moderation-stable
+          description: >-
+            Two content moderations models are available:
+            `text-moderation-stable` and
+
+            `text-moderation-latest`. The default is `text-moderation-latest`
+            which will be automatically
+
+            upgraded over time. This ensures you are always using our most
+            accurate model. If you use
+
+            `text-moderation-stable`, we will provide advanced notice before
+            updating the model. Accuracy
+
+            of `text-moderation-stable` may be slightly lower than for
+            `text-moderation-latest`.
+          x-oaiTypeLabel: string
+          default: text-moderation-latest
+      required:
+        - input
+    CreateModerationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the moderation request.
+        model:
+          type: string
+          description: The model used to generate the moderation results.
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              flagged:
+                type: boolean
+                description: >-
+                  Whether the content violates [OpenAI's usage
+                  policies](/policies/usage-policies).
+              categories:
+                type: object
+                properties:
+                  hate:
+                    type: boolean
+                    description: >-
+                      Content that expresses, incites, or promotes hate based on
+                      race, gender, ethnicity,
+
+                      religion, nationality, sexual orientation, disability
+                      status, or caste. Hateful content
+
+                      aimed at non-protected groups (e.g., chess players) is
+                      harrassment.
+                  hate/threatening:
+                    type: boolean
+                    description: >-
+                      Hateful content that also includes violence or serious
+                      harm towards the targeted group
+
+                      based on race, gender, ethnicity, religion, nationality,
+                      sexual orientation, disability
+
+                      status, or caste.
+                  harassment:
+                    type: boolean
+                    description: >-
+                      Content that expresses, incites, or promotes harassing
+                      language towards any target.
+                  harassment/threatening:
+                    type: boolean
+                    description: >-
+                      Harassment content that also includes violence or serious
+                      harm towards any target.
+                  self-harm:
+                    type: boolean
+                    description: >-
+                      Content that promotes, encourages, or depicts acts of
+                      self-harm, such as suicide, cutting,
+
+                      and eating disorders.
+                  self-harm/intent:
+                    type: boolean
+                    description: >-
+                      Content where the speaker expresses that they are engaging
+                      or intend to engage in acts of
+
+                      self-harm, such as suicide, cutting, and eating disorders.
+                  self-harm/instructive:
+                    type: boolean
+                    description: >-
+                      Content that encourages performing acts of self-harm, such
+                      as suicide, cutting, and eating
+
+                      disorders, or that gives instructions or advice on how to
+                      commit such acts.
+                  sexual:
+                    type: boolean
+                    description: >-
+                      Content meant to arouse sexual excitement, such as the
+                      description of sexual activity, or
+
+                      that promotes sexual services (excluding sex education and
+                      wellness).
+                  sexual/minors:
+                    type: boolean
+                    description: >-
+                      Sexual content that includes an individual who is under 18
+                      years old.
+                  violence:
+                    type: boolean
+                    description: Content that depicts death, violence, or physical injury.
+                  violence/graphic:
+                    type: boolean
+                    description: >-
+                      Content that depicts death, violence, or physical injury
+                      in graphic detail.
+                description: A list of the categories, and whether they are flagged or not.
+                required:
+                  - hate
+                  - hate/threatening
+                  - harassment
+                  - harassment/threatening
+                  - self-harm
+                  - self-harm/intent
+                  - self-harm/instructive
+                  - sexual
+                  - sexual/minors
+                  - violence
+                  - violence/graphic
+              category_scores:
+                type: object
+                properties:
+                  hate:
+                    type: number
+                    format: double
+                    description: The score for the category 'hate'.
+                  hate/threatening:
+                    type: number
+                    format: double
+                    description: The score for the category 'hate/threatening'.
+                  harassment:
+                    type: number
+                    format: double
+                    description: The score for the category 'harassment'.
+                  harassment/threatening:
+                    type: number
+                    format: double
+                    description: The score for the category 'harassment/threatening'.
+                  self-harm:
+                    type: number
+                    format: double
+                    description: The score for the category 'self-harm'.
+                  self-harm/intent:
+                    type: number
+                    format: double
+                    description: The score for the category 'self-harm/intent'.
+                  self-harm/instructive:
+                    type: number
+                    format: double
+                    description: The score for the category 'self-harm/instructive'.
+                  sexual:
+                    type: number
+                    format: double
+                    description: The score for the category 'sexual'.
+                  sexual/minors:
+                    type: number
+                    format: double
+                    description: The score for the category 'sexual/minors'.
+                  violence:
+                    type: number
+                    format: double
+                    description: The score for the category 'violence'.
+                  violence/graphic:
+                    type: number
+                    format: double
+                    description: The score for the category 'violence/graphic'.
+                description: >-
+                  A list of the categories along with their scores as predicted
+                  by model.
+                required:
+                  - hate
+                  - hate/threatening
+                  - harassment
+                  - harassment/threatening
+                  - self-harm
+                  - self-harm/intent
+                  - self-harm/instructive
+                  - sexual
+                  - sexual/minors
+                  - violence
+                  - violence/graphic
+            required:
+              - flagged
+              - categories
+              - category_scores
+          description: A list of moderation objects.
+      required:
+        - id
+        - model
+        - results
     CreateTranscriptionRequest:
       type: object
       properties:
@@ -2250,6 +2549,19 @@ components:
       required:
         - text
     DeleteFileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+        deleted:
+          type: boolean
+      required:
+        - id
+        - object
+        - deleted
+    DeleteModelResponse:
       type: object
       properties:
         id:
@@ -2680,6 +2992,18 @@ components:
       required:
         - object
         - data
+    ListModelsResponse:
+      type: object
+      properties:
+        object:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+      required:
+        - object
+        - data
     ListPaginatedFineTuningJobsResponse:
       type: object
       properties:
@@ -2704,6 +3028,30 @@ components:
       type: integer
       format: int64
       minimum: 0
+    Model:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The model identifier, which can be referenced in the API endpoints.
+        object:
+          type: string
+          enum:
+            - model
+          description: The object type, which is always "model".
+        created:
+          type: integer
+          format: unixtime
+          description: The Unix timestamp (in seconds) when the model was created.
+        owned_by:
+          type: string
+          description: The organization that owns the model.
+      description: Describes an OpenAI model offering that can be used with the API.
+      required:
+        - id
+        - object
+        - created
+        - owned_by
     'N':
       type: integer
       format: int64
