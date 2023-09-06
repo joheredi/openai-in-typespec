@@ -147,7 +147,17 @@ interface FineTuningJobs {
   createFineTuningJob(@body job: CreateFineTuningJobRequest): FineTuningJob;
 
   @get
-  listPaginatedFineTuningJobs(): ListPaginatedFineTuningJobsResponse;
+  listPaginatedFineTuningJobs(
+    /**
+     * Identifier for the last job from the previous pagination request.
+     */
+    @query after?: string,
+
+    /**
+     * Number of fine-tuning jobs to retrieve.
+     */
+    @query limit?: safeint = 20,
+  ): ListPaginatedFineTuningJobsResponse;
 }
 
 @route("/fine_tuning/jobs/{fine_tuning_job_id}")
@@ -156,7 +166,20 @@ interface FineTuningJobsResource {
   @route("events")
   @get
   listFineTuningEvents(
+    /**
+     * The ID of the fine-tuning job to get events for.
+     */
     @path fine_tuning_job_id: string,
+
+    /**
+     * Identifier for the last event from the previous pagination request.
+     */
+    @query after?: string,
+
+    /**
+     * Number of events to retrieve.
+     */
+    @query limit?: integer = 20,
   ): ListFineTuningJobEventsResponse;
 
   @route("cancel")
@@ -164,5 +187,81 @@ interface FineTuningJobsResource {
   cancelFineTuningJob(@path fine_tuning_job_id: string): FineTuningJob;
 }
 
-@route("/fine_tunes")
-interface FineTunes {}
+@route("/fine-tunes")
+interface FineTunes {
+  @post
+  @deprecated("deprecated")
+  @tag("OpenAI")
+  @summary("""
+  Creates a job that fine-tunes a specified model from a given dataset.
+
+  Response includes details of the enqueued job including job status and the name of the fine-tuned models once complete.
+
+  [Learn more about fine-tuning](/docs/guides/legacy-fine-tuning)
+  """)
+  @operationId("createFineTune")
+  createFineTune(@body fine_tune: CreateFineTuneRequest): FineTune;
+
+  @get
+  @deprecated("deprecated")
+  @tag("OpenAI")
+  @summary("List your organization's fine-tuning jobs")
+  @operationId("listFineTunes")
+  listFineTunes(): ListFineTunesResponse;
+}
+
+@route("/fine-tunes/{fine_tune_id}")
+interface FineTunesResource {
+  @get
+  @deprecated("deprecated")
+  @tag("OpenAI")
+  @summary("""
+  Gets info about the fine-tune job.
+
+  [Learn more about fine-tuning](/docs/guides/legacy-fine-tuning)
+  """)
+  @operationId("retrieveFineTune")
+  retrieveFineTune(
+    /**
+     * The ID of the fine-tune job
+     */
+    @path fine_tune_id: string,
+  ): FineTune;
+
+  @route("events")
+  @get
+  @deprecated("deprecated")
+  @tag("OpenAI")
+  @summary("Get fine-grained status updates for a fine-tune job.")
+  @operationId("listFineTuneEvents")
+  listFineTuneEvents(
+    /**
+     * The ID of the fine-tune job to get events for.
+     */
+    @path fine_tune_id: string,
+
+    /**
+     * Whether to stream events for the fine-tune job. If set to true, events will be sent as
+     * data-only
+     * [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format)
+     * as they become available. The stream will terminate with a `data: [DONE]` message when the
+     * job is finished (succeeded, cancelled, or failed).
+     *
+     * If set to false, only events generated so far will be returned.
+     */
+    @query stream?: boolean = false,
+  ): ListFineTuneEventsResponse;
+
+  @route("cancel")
+  @post
+  @deprecated("deprecated")
+  @tag("OpenAI")
+  @summary("Immediately cancel a fine-tune job.")
+  @operationId("cancelFineTune")
+  cancelFineTune(
+    /**
+     * The ID of the fine-tune job to cancel
+     */
+    @path fine_tune_id: string,
+  ): FineTune;
+}

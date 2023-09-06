@@ -366,6 +366,137 @@ paths:
             application/json:
               schema:
                 type: string
+  /fine-tunes:
+    post:
+      tags:
+        - OpenAI
+      operationId: createFineTune
+      summary: >-
+        Creates a job that fine-tunes a specified model from a given dataset.
+
+
+        Response includes details of the enqueued job including job status and
+        the name of the fine-tuned models once complete.
+
+
+        [Learn more about fine-tuning](/docs/guides/legacy-fine-tuning)
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTune'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFineTuneRequest'
+      deprecated: true
+    get:
+      tags:
+        - OpenAI
+      operationId: listFineTunes
+      summary: List your organization's fine-tuning jobs
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFineTunesResponse'
+      deprecated: true
+  /fine-tunes/{fine_tune_id}:
+    get:
+      tags:
+        - OpenAI
+      operationId: retrieveFineTune
+      summary: |-
+        Gets info about the fine-tune job.
+
+        [Learn more about fine-tuning](/docs/guides/legacy-fine-tuning)
+      parameters:
+        - name: fine_tune_id
+          in: path
+          required: true
+          description: The ID of the fine-tune job
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTune'
+      deprecated: true
+  /fine-tunes/{fine_tune_id}/cancel:
+    post:
+      tags:
+        - OpenAI
+      operationId: cancelFineTune
+      summary: Immediately cancel a fine-tune job.
+      parameters:
+        - name: fine_tune_id
+          in: path
+          required: true
+          description: The ID of the fine-tune job to cancel
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineTune'
+      deprecated: true
+  /fine-tunes/{fine_tune_id}/events:
+    get:
+      tags:
+        - OpenAI
+      operationId: listFineTuneEvents
+      summary: Get fine-grained status updates for a fine-tune job.
+      parameters:
+        - name: fine_tune_id
+          in: path
+          required: true
+          description: The ID of the fine-tune job to get events for.
+          schema:
+            type: string
+        - name: stream
+          in: query
+          required: false
+          description: >-
+            Whether to stream events for the fine-tune job. If set to true,
+            events will be sent as
+
+            data-only
+
+            [server-sent
+            events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format)
+
+            as they become available. The stream will terminate with a `data:
+            [DONE]` message when the
+
+            job is finished (succeeded, cancelled, or failed).
+
+
+            If set to false, only events generated so far will be returned.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFineTuneEventsResponse'
+      deprecated: true
   /fine_tuning/jobs:
     post:
       operationId: FineTuningJobs_createFineTuningJob
@@ -385,7 +516,21 @@ paths:
               $ref: '#/components/schemas/CreateFineTuningJobRequest'
     get:
       operationId: FineTuningJobs_listPaginatedFineTuningJobs
-      parameters: []
+      parameters:
+        - name: after
+          in: query
+          required: false
+          description: Identifier for the last job from the previous pagination request.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Number of fine-tuning jobs to retrieve.
+          schema:
+            type: integer
+            format: int64
+            default: 20
       responses:
         '200':
           description: The request has succeeded.
@@ -432,8 +577,22 @@ paths:
         - name: fine_tuning_job_id
           in: path
           required: true
+          description: The ID of the fine-tuning job to get events for.
           schema:
             type: string
+        - name: after
+          in: query
+          required: false
+          description: Identifier for the last event from the previous pagination request.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Number of events to retrieve.
+          schema:
+            type: integer
+            default: 20
       responses:
         '200':
           description: The request has succeeded.
