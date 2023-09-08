@@ -1,0 +1,1 @@
+{"version":3,"file":"openAIClient.d.ts","sourceRoot":"","sources":["../../src/openAIClient.ts"],"names":[],"mappings":"AAGA,OAAO,EAAa,aAAa,EAAE,MAAM,yBAAyB,CAAC;AAEnE,OAAO,EAAE,YAAY,EAAE,MAAM,qBAAqB,CAAC;AAEnD;;;;GAIG;AACH,MAAM,CAAC,OAAO,UAAU,YAAY,CAClC,QAAQ,EAAE,MAAM,EAChB,OAAO,GAAE,aAAkB,GAC1B,YAAY,CAsBd"}
