@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@azure-tools/typespec-ts": "/home/jmanuelh/microsoft/autorest.typescript/packages/typespec-ts",
     "@typespec/compiler": "latest",
-    "@typespec/rest": "latest",
-    "@typespec/openapi3": "latest"
+    "@typespec/openapi3": "latest",
+    "@typespec/rest": "latest"
   },
   "private": true
 }

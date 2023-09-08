@@ -1,0 +1,7 @@
+emit:
+ - "@azure-tools/typespec-ts"
+options:
+  "@azure-tools/typespec-ts":
+    emitter-output-dir: "{project-root}/ts-modular-output"
+    isModularLibrary: true
+    azureSdkForJs: false
